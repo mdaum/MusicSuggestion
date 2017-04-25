@@ -1,5 +1,6 @@
 package com.example.mdaum.musicsuggestion;
 
+import android.media.MediaPlayer;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import org.json.simple.parser.ParseException;
 
 public class MainActivity extends AppCompatActivity {
 
+    public MediaPlayer mp;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -22,6 +24,9 @@ public class MainActivity extends AppCompatActivity {
         // TODO: run the network stuff asynchronously on another thread
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
+
+        // setup vars
+        mp = new MediaPlayer();
 
         // generate random songs
         ArrayList<SongInfo> list = new ArrayList<SongInfo>();
@@ -37,6 +42,34 @@ public class MainActivity extends AppCompatActivity {
         // log the list
         for (SongInfo s : list) {
             Log.d("Song", s.toString());
+        }
+
+        if(list.size() != 0)
+        {
+            playSong(list.get(0));
+        }
+    }
+
+    // method to play a song
+    private void playSong(SongInfo s)
+    {
+        if(s.preview_url != null)
+        {
+            try
+            {
+                // setup the media player and start
+                mp.setDataSource(s.preview_url);
+                mp.prepare();
+                mp.start();
+            }
+            catch (Exception e)
+            {
+                Log.d("ERROR", e.toString());
+            }
+        }
+        else
+        {
+            Log.d("ERROR", "Song has null preview url");
         }
     }
 }
