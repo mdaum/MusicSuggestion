@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="INSERT TUTORIAL TEXT WHEN WE FIGURE OUT WHAT EXACTLY WE DO: The process of encoding hearts is incalculable. The inhabitants of my Twilight Town were data created from real hearts. I was convinced that they would think and behave the way I had envisioned - -but I couldn't have been more wrong. A heart is so much more than any system. I saw it when Roxas and Kairi crossed paths. I knew. But I was too stubborn to accept it. It's always the same. I try to wrap my mind around things my heart already knows, only to fail. While I was trying to bring Sora back, I had so many plans in store. But once Sora was an acting force, they fell apart. All my research amounted to nothing, compared with that one boy's heart. "/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center|bottom"
+        android:orientation="vertical" >
+
+        <Button
+            android:id="@+id/button1"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="145dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|center"
+            android:text="@string/back"
+            android:onClick="startMain"/>
+        </LinearLayout>
+</LinearLayout>
