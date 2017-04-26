@@ -8,6 +8,8 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+
 import org.json.simple.parser.ParseException;
 
 public class MainActivity extends AppCompatActivity {
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         if(list.size() != 0)
         {
             playSong(list.get(0));
+
         }
     }
 
@@ -61,6 +64,15 @@ public class MainActivity extends AppCompatActivity {
                 mp.setDataSource(s.preview_url);
                 mp.prepare();
                 mp.start();
+
+                //logging genre logic
+                String toLog=s.genres.size()+" genres: ";//build out string to Log in while loop
+                for(String str: s.genres){//append to toLog
+                    toLog+=str+", ";
+                }
+                //log it
+                Log.d("GENRE",toLog); //extra , but whatevs
+
             }
             catch (Exception e)
             {

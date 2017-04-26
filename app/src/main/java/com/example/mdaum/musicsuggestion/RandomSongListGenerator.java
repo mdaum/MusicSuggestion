@@ -10,7 +10,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -59,6 +61,7 @@ public class RandomSongListGenerator {
 
             //declare vars to be loaded with data and passed to the SongInfo Object
             String name, album, trackurl, id, preview_url;
+            Set<String> genres;
             ArrayList<SpotifyImage> albumArt = new ArrayList<SpotifyImage>();
             ArrayList<ArtistInfo> artists = new ArrayList<ArtistInfo>();
             long duration, popularity;
@@ -73,6 +76,8 @@ public class RandomSongListGenerator {
             duration = (long) track.get("duration_ms");
             popularity = (long) track.get("popularity");
             explicit = (boolean) track.get("explicit");
+
+            genres=new HashSet<String>();//to be loaded in artists foreach loop
 
             //for album art objects need to iterate through each image in the JSONArray
             for (Object image_obj : (JSONArray) albumJSON.get("images")) {
@@ -90,10 +95,27 @@ public class RandomSongListGenerator {
                 String url = (String) artist.get("href");
                 String a_id = (String) artist.get("id");
                 artists.add(new ArtistInfo(n, url, a_id));
+
+                //now ping api page for artist so we can get the genres
+                HttpURLConnection pingArtist = (HttpURLConnection) ((new URL((String)artist.get("href")).openConnection()));
+                pingArtist.setRequestProperty("Content-Type", "application/json");
+                pingArtist.setRequestProperty("Accept", "application/json");
+                pingArtist.setRequestMethod("GET");
+                pingArtist.connect();
+                Reader artist_reader = new BufferedReader(new InputStreamReader(pingArtist.getInputStream()));
+                JSONObject artist_response = (JSONObject) jsonParser.parse(artist_reader);
+                pingArtist.disconnect();
+                //get json array of genres
+                JSONArray genre_array= (JSONArray) artist_response.get("genres");
+                //now loop through those...adding to the HashSet
+                for (Object genre_obj:genre_array) {
+                     String genre=(String)genre_obj;//cast
+                     genres.add(genre);//add to HashSet
+                }
             }
 
             //load object into ArrayList
-            toRet.add(new SongInfo(name, album, albumArt, artists, duration, explicit, trackurl, id, popularity, preview_url));
+            toRet.add(new SongInfo(name, album, albumArt, artists, duration, explicit, trackurl, id, popularity, preview_url,genres));
         }
         //now toRet is full of the SongInfo Objects
         return toRet;

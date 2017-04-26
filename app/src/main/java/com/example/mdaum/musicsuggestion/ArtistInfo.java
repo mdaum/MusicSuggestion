@@ -1,7 +1,7 @@
 package com.example.mdaum.musicsuggestion;
 
 public class ArtistInfo {
-	String name;
+	String name;//duh
 	String url;
 	String id;
 	public ArtistInfo(String n, String u, String i){
