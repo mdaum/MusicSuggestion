@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MusicSuggestion</string>
+    <string name="tutorial">Tutorial</string>
+    <string name="hot">Start HotOrNot</string>
 </resources>
