@@ -11,7 +11,7 @@ public class SongInfo {
 	ArrayList<SpotifyImage> albumArt;
 	ArrayList<ArtistInfo>artists;
 	long duration; //in ms
-	boolean explicit;
+	boolean explicit,hot;
 	String trackurl;
 	String id;
 	long popularity;
@@ -29,6 +29,7 @@ public class SongInfo {
 		this.popularity=pop;
 		this.preview_url=prev;
 		this.genres=g;
+		this.hot=false;//not hot till its not...#mobileweeb
 	}
 	@Override
 	public String toString(){
