@@ -1,11 +1,15 @@
 package com.example.mdaum.musicsuggestion;
 
 
+import android.os.Parcelable;
+import android.webkit.JavascriptInterface;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SongInfo {
+public class SongInfo{
 	String name;
 	String album;
 	ArrayList<SpotifyImage> albumArt;
@@ -35,4 +39,5 @@ public class SongInfo {
 	public String toString(){
 		return name+", by "+artists.get(0).name;
 	}
+
 }

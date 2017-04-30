@@ -1,5 +1,8 @@
 package com.example.mdaum.musicsuggestion;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
@@ -7,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import org.json.simple.parser.ParseException;
@@ -16,11 +20,18 @@ import java.util.ArrayList;
 
 public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedListener {
     TextView info;
+    AlertDialog.Builder alert;
+    EditText et;
     Button hot,not,replay,done;
     public MediaPlayer mp;
     boolean isInit = false;
-    public ArrayList<SongInfo> list = new ArrayList<SongInfo>();
+    public ArrayList<SongInfo> songs = new ArrayList<SongInfo>();
+    TextView tv;
+
     int currSong;
+    int numSuggestSongs = 0;
+
+    final int MAX_SONGS = 10; // maximum number of songs we can suggest
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,6 +41,8 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         this.not= (Button) findViewById(R.id.not);
         this.replay= (Button) findViewById(R.id.replay);
         this.done = (Button)findViewById(R.id.done);
+        this.alert = new AlertDialog.Builder(this);
+
         if(!isInit)
         {
             init();
@@ -49,10 +62,44 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         // setup vars
         mp = new MediaPlayer();
 
+        // setup alert to get user input
+        // there are multiple ways to get user input
+        // this is one of the simplest and easiest
+        // can look into other ways potentially
+        alert.setTitle("Num Songs To Suggest");
+        alert.setMessage("Please enter the number of songs (max is " + MAX_SONGS + ")");
+        et = new EditText(this);
+        alert.setView(et);
+
+        // if the user submits a value...
+        // TODO: handle bad values
+        alert.setPositiveButton("Ok!", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                String value = et.getText().toString();
+                numSuggestSongs = Integer.parseInt(value);
+
+                if(songs.size() != 0)
+                {
+                    Log.d("ALERT", "playing song in response to user input");
+                    playSong(songs.get(0));
+                    currSong=0;
+                }
+
+            }
+        });
+
+        // otherwise...
+        // TODO: implement this
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+
+            }
+        });
+
         // generate random songs
         try
         {
-            list = RandomSongListGenerator.RandSongList();
+            songs = RandomSongListGenerator.RandSongList();
         }
         catch (ParseException | IOException e)
         {
@@ -60,15 +107,11 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         }
 
         // log the list
-        for (SongInfo s : list) {
+        for (SongInfo s : songs) {
             Log.d("Song", s.toString());
         }
 
-        if(list.size() != 0)
-        {
-            playSong(list.get(0));
-            currSong=0;
-        }
+        alert.show();
     }
 
     // method to play a song
@@ -138,8 +181,16 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         mp.start();
     }
 
+    // stops the music and sets up for suggestion
+    // Note: This is a non-standard way of transitioning
+    // Seems necessary because our objects are complex
+    // and aren't easily serializable since we don't have control over
+    // Spotify objects
     public void DoneClick(View v){
-        //todo: now actually get to suggesting
+        mp.stop();
+        setContentView(R.layout.activity_suggest);
+        tv = (TextView)findViewById(R.id.suggest);
+        suggest();
     }
 
     public void HONClick(View v){
@@ -150,17 +201,17 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         mp.reset();
         //set hot bool for songInfo obj
         if(clicked.getText().equals("HOT")){
-            list.get(currSong).hot=true;
+            songs.get(currSong).hot=true;
             Log.d("HONCLICK","it's hot");
         }
         else if(clicked.getText().equals("NOT")){
-            list.get(currSong).hot=false;
+            songs.get(currSong).hot=false;
             Log.d("HONCLICK","it's not");
         }
 
         //play next song
         currSong++;
-        playSong(list.get(currSong));
+        playSong(songs.get(currSong));
     }
 
     public void ReplayClick(View v){
@@ -170,6 +221,19 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         mp.seekTo(0);
         //play
         mp.start();
+    }
+
+    public void suggest()
+    {
+        String text = "";
+        SongInfo song;
+        for(int i = 0;i < numSuggestSongs;i++)
+        {
+            song = songs.get(i);
+            text += song.toString() + "\n";
+        }
+
+        tv.setText(text);
     }
 
 /*    @Override
