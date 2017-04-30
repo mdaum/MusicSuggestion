@@ -15,13 +15,22 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedListener {
     TextView info;
@@ -44,7 +53,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
     int currSongSuggest; //suggest version of this
     int numSuggestSongs = 0;
 
-    final int MAX_SONGS = 10; // maximum number of songs we can suggest
+    final int MAX_SONGS = 20; // maximum number of songs we can suggest
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -283,12 +292,98 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         //then we can loop through it just like HON
         //for now just going to make the arrayList the first x songs from songs
         suggested_songs=new ArrayList<SongInfo>();
-        for(int i=0;i<numSuggestSongs;i++){
-            suggested_songs.add(songs.get(i));
+        //to hold our hot songs
+        ArrayList<SongInfo>hotSongs = new ArrayList<SongInfo>();
+        //load up our hot songs
+        for (SongInfo s : songs) {
+            if(s.hot)hotSongs.add(s);
         }
-        //note we will also play the first song from here.
+        //this will hold top songs for each artist
+        ArrayList<ArrayList<SongInfo>>ArtistTopSongs = new ArrayList<ArrayList<SongInfo>>();
+        //now fill this up...only up to the desired size...this code is very derivative to RandomSongListGenerator
+        JSONParser jsonParser = new JSONParser();
+        for (int j=0;j<Math.min(hotSongs.size(),numSuggestSongs);j++){
+            HttpURLConnection c;
+            try {
+                c = (HttpURLConnection) ((new URL("https://api.spotify.com/v1/artists/"+hotSongs.get(j).artists.get(0).id+"/top-tracks?country=US").openConnection()));
+                c.setRequestProperty("Content-Type", "application/json");
+                c.setRequestProperty("Accept", "application/json");
+                c.setRequestMethod("GET");
+                c.connect();
+                //Buffered Reader for the output of connection...needed for JSONParser.parse
+                Reader reader = new BufferedReader(new InputStreamReader(c.getInputStream()));
+                JSONObject response = (JSONObject) jsonParser.parse(reader);
+                //Log.d("JSON",json.toJSONString());
+                c.disconnect();
+                JSONArray tracks = (JSONArray)response.get("tracks");
+                ArrayList<SongInfo>topSongs = new ArrayList<SongInfo>();
+                for (Object o : tracks) {
+                    JSONObject track = (JSONObject) o; //need to cast here
+                    JSONObject albumJSON = (JSONObject) track.get("album");
+                    JSONArray artistArray = (JSONArray) track.get("artists");
+
+                    //declare vars to be loaded with data and passed to the SongInfo Object
+                    String name, album, trackurl, id, preview_url;
+                    Set<String> genres;
+                    ArrayList<SpotifyImage> albumArt = new ArrayList<SpotifyImage>();
+                    ArrayList<ArtistInfo> artists = new ArrayList<ArtistInfo>();
+                    long duration, popularity;
+                    boolean explicit;
+
+                    //start populating each tiem;
+                    name = (String) track.get("name");
+                    album = (String) albumJSON.get("name");
+                    trackurl = (String) track.get("href");
+                    id = (String) track.get("id");
+                    preview_url = (String) track.get("preview_url");
+                    duration = (long) track.get("duration_ms");
+                    popularity = (long) track.get("popularity");
+                    explicit = (boolean) track.get("explicit");
+
+                    genres=new HashSet<String>();//to be loaded in artists foreach loop
+
+                    //for album art objects need to iterate through each image in the JSONArray
+                    for (Object image_obj : (JSONArray) albumJSON.get("images")) {
+                        JSONObject image = (JSONObject) image_obj;
+                        long h = (long) image.get("height");
+                        long w = (long) image.get("width");
+                        String url = (String) image.get("url");
+                        albumArt.add(new SpotifyImage(w, h, url));
+                    }
+
+                    //for the artist object...need to iterate through the JSONArray
+                    for (Object artist_obj : artistArray) {
+                        JSONObject artist = (JSONObject) artist_obj;
+                        String n = (String) artist.get("name");
+                        String url = (String) artist.get("href");
+                        String a_id = (String) artist.get("id");
+                        artists.add(new ArtistInfo(n, url, a_id));
+                    }
+                    topSongs.add(new SongInfo(name, album, albumArt, artists, duration, explicit, trackurl, id, popularity, preview_url,genres));
+                }
+                ArtistTopSongs.add(topSongs);
+            } catch (MalformedURLException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (ParseException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        //here we now have nested structure of top songs per artist
+        //now we loop through the nested structure...adding songs to our suggested songs list
+        int songidx=-1;
+        for(int i=0;i<numSuggestSongs;i++){
+            int index = i%ArtistTopSongs.size();
+            if(index==0)songidx++;
+            suggested_songs.add(ArtistTopSongs.get(index).get(songidx));
+        }
+        //play the song and set suggestedSong index to 0
         currSongSuggest=0;
-        playSong(suggested_songs.get(0),false);
+        playSong(suggested_songs.get(currSongSuggest),false);
     }
 
     //this will make http reqest and get the bitmap for the image url
