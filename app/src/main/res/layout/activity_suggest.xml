@@ -1,12 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:weightSum="1">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="179dp"
+        android:layout_weight="0.39">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:id="@+id/suggestview"/>
+    </FrameLayout>
 
     <TextView
+        android:id="@+id/songInfo_Suggest"
+        android:gravity="center"
+        android:text="wuperowiefjwoweeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.10" />
+
+    <Button
+        android:text="Replay"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="test"
-        android:id="@+id/suggest"/>
+        android:layout_height="wrap_content"
+        android:id="@+id/replay_suggest"
+        android:layout_weight="0.10"
+        android:onClick="ReplayClick"/>
+
+    <Button
+        android:text="Next"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/next"
+        android:layout_weight="0.10"
+        android:onClick="SuggestClick"/>
+
+    <Button
+        android:text="Previous"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/prev"
+        android:layout_weight="0.13"
+        android:onClick="SuggestClick"/>
+
 
 </LinearLayout>

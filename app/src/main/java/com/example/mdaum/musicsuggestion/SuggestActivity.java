@@ -21,7 +21,7 @@ public class SuggestActivity extends AppCompatActivity
         setContentView(R.layout.activity_suggest);
         Bundle extras = getIntent().getExtras();
 
-        tv = (TextView) findViewById(R.id.suggest);
+      //  tv = (TextView) findViewById(R.id.suggest);
         songs = (ArrayList<SongInfo>) extras.get("songs");
         numSuggestSongs = (int) extras.get("numSuggestSongs");
 

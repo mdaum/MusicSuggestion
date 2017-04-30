@@ -2,7 +2,8 @@ package com.example.mdaum.musicsuggestion;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
@@ -11,24 +12,36 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedListener {
     TextView info;
     AlertDialog.Builder alert;
     EditText et;
+    ImageView honimg;
     Button hot,not,replay,done;
+
+    //these objects are instantiatied once we launch the suggest portion of app
+    ImageView suggestimg;
+    Button next,prev,replay_suggest;
+    TextView suggest_info;
+
     public MediaPlayer mp;
     boolean isInit = false;
     public ArrayList<SongInfo> songs = new ArrayList<SongInfo>();
-    TextView tv;
+    public ArrayList<SongInfo> suggested_songs; //to be instantiated and loaded up by suggest() void method
 
-    int currSong;
+    int currSongHON; //counter for which song we are currently playing
+    int currSongSuggest; //suggest version of this
     int numSuggestSongs = 0;
 
     final int MAX_SONGS = 10; // maximum number of songs we can suggest
@@ -42,6 +55,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         this.replay= (Button) findViewById(R.id.replay);
         this.done = (Button)findViewById(R.id.done);
         this.alert = new AlertDialog.Builder(this);
+        this.honimg=(ImageView)findViewById(R.id.honview);
 
         if(!isInit)
         {
@@ -81,8 +95,8 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
                 if(songs.size() != 0)
                 {
                     Log.d("ALERT", "playing song in response to user input");
-                    playSong(songs.get(0));
-                    currSong=0;
+                    playSong(songs.get(0),true);
+                    currSongHON =0;
                 }
 
             }
@@ -114,8 +128,8 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         alert.show();
     }
 
-    // method to play a song
-    private void playSong(SongInfo s)
+    // method to play a song, boolean inHon indicates which ImageView we will update
+    private void playSong(SongInfo s,boolean inHON)
     {
         if(s.preview_url != null)
         {
@@ -134,12 +148,27 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
                 //log it
                 Log.d("GENRE",toLog); //extra , but whatevs
 
+                //if there is album art for the song, we get the bitmap for it and set our imgview
+                //this is where we use the boolean inHON
+                if(s.albumArt.get(0)!=null) {
+                    Log.d("IMAGEURL", s.albumArt.get(0).url);
+                    if(inHON)honimg.setImageBitmap(getbmpfromURL(s.albumArt.get(0).url));
+                    else suggestimg.setImageBitmap(getbmpfromURL(s.albumArt.get(0).url));
+                }
+                else{
+                    Log.d("IMAGEURL","coudn't find one");
+                    if(inHON)honimg.setImageResource(R.drawable.noart);
+                    else suggestimg.setImageResource(R.drawable.noart);
+                }
+
             }
             catch (Exception e)
             {
                 Log.d("ERROR", Log.getStackTraceString(e));
             }
-            info.setText(s.toString());
+            //need to either update suggest or HON info text view
+            if(inHON)info.setText(s.toString());
+            else suggest_info.setText(s.toString());
         }
         else
         {
@@ -188,8 +217,15 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
     // Spotify objects
     public void DoneClick(View v){
         mp.stop();
+        mp.reset();
         setContentView(R.layout.activity_suggest);
-        tv = (TextView)findViewById(R.id.suggest);
+        //now initialize gui objects
+        suggestimg= (ImageView) findViewById(R.id.suggestview);
+        next= (Button) findViewById(R.id.next);
+        prev= (Button) findViewById(R.id.prev);
+        replay_suggest= (Button) findViewById(R.id.replay_suggest);
+        suggest_info=(TextView) findViewById(R.id.songInfo_Suggest);
+        //now we suggest...
         suggest();
     }
 
@@ -201,17 +237,36 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         mp.reset();
         //set hot bool for songInfo obj
         if(clicked.getText().equals("HOT")){
-            songs.get(currSong).hot=true;
+            songs.get(currSongHON).hot=true;
             Log.d("HONCLICK","it's hot");
         }
         else if(clicked.getText().equals("NOT")){
-            songs.get(currSong).hot=false;
+            songs.get(currSongHON).hot=false;
             Log.d("HONCLICK","it's not");
         }
 
         //play next song
-        currSong++;
-        playSong(songs.get(currSong));
+        currSongHON++;
+        playSong(songs.get(currSongHON),true);
+
+    }
+
+    public void SuggestClick(View v){
+        Button clicked = (Button)v;
+        mp.stop();
+        mp.reset();
+        //if next...wrap counter around if necessary and play it
+        if(clicked.getText().equals("Next")){
+            currSongSuggest++;
+            if(currSongSuggest==numSuggestSongs)currSongSuggest=0;
+            playSong(suggested_songs.get(currSongSuggest),false);
+        }
+        //if prev...same deal but backwards
+        else if(clicked.getText().equals("Previous")){
+            currSongSuggest--;
+            if(currSongSuggest==-1)currSongSuggest=numSuggestSongs-1;
+            playSong(suggested_songs.get(currSongSuggest),false);
+        }
     }
 
     public void ReplayClick(View v){
@@ -224,22 +279,40 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
     }
 
     public void suggest()
-    {
-        String text = "";
-        SongInfo song;
-        for(int i = 0;i < numSuggestSongs;i++)
-        {
-            song = songs.get(i);
-            text += song.toString() + "\n";
+    {//this will produce an ArrayList of SongInfoObjects....and we will set that to a global var
+        //then we can loop through it just like HON
+        //for now just going to make the arrayList the first x songs from songs
+        suggested_songs=new ArrayList<SongInfo>();
+        for(int i=0;i<numSuggestSongs;i++){
+            suggested_songs.add(songs.get(i));
         }
-
-        tv.setText(text);
+        //note we will also play the first song from here.
+        currSongSuggest=0;
+        playSong(suggested_songs.get(0),false);
     }
 
-/*    @Override
-    public void onBackPressed(){
+    //this will make http reqest and get the bitmap for the image url
+    public Bitmap getbmpfromURL(String surl){
+        try {
+            URL url = new URL(surl);
+            HttpURLConnection urlcon = (HttpURLConnection) url.openConnection();
+            urlcon.setDoInput(true);
+            urlcon.connect();
+            InputStream in = urlcon.getInputStream();
+            Bitmap mIcon = BitmapFactory.decodeStream(in);
+            urlcon.disconnect();
+            return  mIcon;
+        } catch (Exception e) {
+            Log.e("Error", e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
 
-    }*/
+    @Override
+    public void onBackPressed(){
+    //for now we don't want user pressing back button here...this disables it essentially
+    }
 
 
 }
