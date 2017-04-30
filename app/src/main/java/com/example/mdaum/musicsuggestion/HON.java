@@ -140,13 +140,13 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
                 mp.prepareAsync();
                 mp.setOnPreparedListener(this);
 
-                //logging genre logic
+/*                //logging genre logic
                 String toLog=s.genres.size()+" genres: ";//build out string to Log in while loop
                 for(String str: s.genres){//append to toLog
                     toLog+=str+", ";
                 }
                 //log it
-                Log.d("GENRE",toLog); //extra , but whatevs
+                Log.d("GENRE",toLog); //extra , but whatevs*/
 
                 //if there is album art for the song, we get the bitmap for it and set our imgview
                 //this is where we use the boolean inHON
@@ -247,8 +247,8 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
 
         //play next song
         currSongHON++;
-        playSong(songs.get(currSongHON),true);
-
+       if(currSongHON<songs.size()) playSong(songs.get(currSongHON),true);
+        else DoneClick(v);//force the app to move on to done phase...done rating songs...
     }
 
     public void SuggestClick(View v){
@@ -312,6 +312,9 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
     @Override
     public void onBackPressed(){
     //for now we don't want user pressing back button here...this disables it essentially
+        mp.pause();
+        mp.reset();
+        super.onBackPressed();
     }
 
 

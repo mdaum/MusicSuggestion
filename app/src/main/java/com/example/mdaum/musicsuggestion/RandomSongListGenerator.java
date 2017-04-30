@@ -98,7 +98,7 @@ public class RandomSongListGenerator {
                     String a_id = (String) artist.get("id");
                     artists.add(new ArtistInfo(n, url, a_id));
 
-                    //now ping api page for artist so we can get the genres
+/*                    //now ping api page for artist so we can get the genres
                     HttpURLConnection pingArtist = (HttpURLConnection) ((new URL((String) artist.get("href")).openConnection()));
                     pingArtist.setRequestProperty("Content-Type", "application/json");
                     pingArtist.setRequestProperty("Accept", "application/json");
@@ -113,7 +113,7 @@ public class RandomSongListGenerator {
                     for (Object genre_obj : genre_array) {
                         String genre = (String) genre_obj;//cast
                         genres.add(genre);//add to HashSet
-                    }
+                    }*/
                 }
 
                 //load object into ArrayList
