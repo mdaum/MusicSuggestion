@@ -14,6 +14,7 @@ import java.util.Iterator;
 
 import org.json.simple.parser.ParseException;
 
+// Main Menu activity, only purpose is to start other activities
 public class MainActivity extends AppCompatActivity  {
 
     @Override
@@ -24,18 +25,18 @@ public class MainActivity extends AppCompatActivity  {
 
 
 
-
+    // start tutorial
     public void startTutorial(View v)
     {
         Intent tut = new Intent(this, TutorialActivity.class);
         startActivity(tut);
     }
+
+    // start hot or not
     public void startHotOrNot(View v)
     {
         Intent hon = new Intent(this, HON.class);
         startActivity(hon);
     }
-
-    // listener for when media player has buffered enough to play
 
 }

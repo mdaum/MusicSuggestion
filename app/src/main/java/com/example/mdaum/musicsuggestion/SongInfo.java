@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+// class to represent a song and its metadata
 public class SongInfo{
 	String name;
 	String album;

@@ -32,7 +32,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+// Main workhorse activity of the app
 public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedListener {
+
+    // basic views
     TextView info;
     AlertDialog.Builder alert;
     EditText et;
@@ -44,6 +47,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
     Button next,prev,replay_suggest;
     TextView suggest_info;
 
+    // song playing objects and data structures
     public MediaPlayer mp;
     boolean isInit = false;
     public ArrayList<SongInfo> songs = new ArrayList<SongInfo>();
@@ -58,6 +62,8 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hon);
+
+        // initialize basic views
         this.info= (TextView) findViewById(R.id.songInfo);
         this.hot= (Button) findViewById(R.id.hot);
         this.not= (Button) findViewById(R.id.not);
@@ -66,6 +72,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         this.alert = new AlertDialog.Builder(this);
         this.honimg=(ImageView)findViewById(R.id.honview);
 
+        // do one-time initialization tasks
         if(!isInit)
         {
             init();
@@ -73,12 +80,12 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         }
     }
 
+    // Does one-time initialization that should only happen in onCreate()
     private void init()
     {
         // android typically does not allow network connections on the UI thread
         // these lines revoke this policy
         // will cause the app to crash if bad network connection
-        // TODO: run the network stuff asynchronously on another thread
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
@@ -95,12 +102,12 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         alert.setView(et);
 
         // if the user submits a value...
-        // TODO: handle bad values
         alert.setPositiveButton("Ok!", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 String value = et.getText().toString();
                 numSuggestSongs = Integer.parseInt(value);
 
+                // If we found songs, play them!
                 if(songs.size() != 0)
                 {
                     Log.d("ALERT", "playing song in response to user input");
@@ -111,8 +118,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
             }
         });
 
-        // otherwise...
-        // TODO: implement this
+        // otherwise...do nothing
         alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
 
@@ -134,6 +140,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
             Log.d("Song", s.toString());
         }
 
+        // show the user input view to the user
         alert.show();
     }
 
@@ -148,14 +155,6 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
                 mp.setDataSource(s.preview_url);
                 mp.prepareAsync();
                 mp.setOnPreparedListener(this);
-
-/*                //logging genre logic
-                String toLog=s.genres.size()+" genres: ";//build out string to Log in while loop
-                for(String str: s.genres){//append to toLog
-                    toLog+=str+", ";
-                }
-                //log it
-                Log.d("GENRE",toLog); //extra , but whatevs*/
 
                 //if there is album art for the song, we get the bitmap for it and set our imgview
                 //this is where we use the boolean inHON
@@ -228,12 +227,14 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         mp.stop();
         mp.reset();
         setContentView(R.layout.activity_suggest);
+
         //now initialize gui objects
         suggestimg= (ImageView) findViewById(R.id.suggestview);
         next= (Button) findViewById(R.id.next);
         prev= (Button) findViewById(R.id.prev);
         replay_suggest= (Button) findViewById(R.id.replay_suggest);
         suggest_info=(TextView) findViewById(R.id.songInfo_Suggest);
+
         //now we suggest...
         suggest();
     }
@@ -241,9 +242,11 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
     public void HONClick(View v){
         //check which button clicked
         Button clicked = (Button)v;
+
         //gotta stop the media player, and then apparently reset...
         mp.stop();
         mp.reset();
+
         //set hot bool for songInfo obj
         if(clicked.getText().equals("HOT")){
             songs.get(currSongHON).hot=true;
@@ -264,6 +267,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
         Button clicked = (Button)v;
         mp.stop();
         mp.reset();
+
         //if next...wrap counter around if necessary and play it
         if(clicked.getText().equals("Next")){
             currSongSuggest++;
@@ -288,18 +292,23 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
     }
 
     public void suggest()
-    {//this will produce an ArrayList of SongInfoObjects....and we will set that to a global var
+    {
+        //this will produce an ArrayList of SongInfoObjects....and we will set that to a global var
         //then we can loop through it just like HON
         //for now just going to make the arrayList the first x songs from songs
         suggested_songs=new ArrayList<SongInfo>();
+
         //to hold our hot songs
         ArrayList<SongInfo>hotSongs = new ArrayList<SongInfo>();
+
         //load up our hot songs
         for (SongInfo s : songs) {
             if(s.hot)hotSongs.add(s);
         }
+
         //this will hold top songs for each artist
         ArrayList<ArrayList<SongInfo>>ArtistTopSongs = new ArrayList<ArrayList<SongInfo>>();
+
         //now fill this up...only up to the desired size...this code is very derivative to RandomSongListGenerator
         JSONParser jsonParser = new JSONParser();
         for (int j=0;j<Math.min(hotSongs.size(),numSuggestSongs);j++){
@@ -310,16 +319,21 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
                 c.setRequestProperty("Accept", "application/json");
                 c.setRequestMethod("GET");
                 c.connect();
+
                 //Buffered Reader for the output of connection...needed for JSONParser.parse
                 Reader reader = new BufferedReader(new InputStreamReader(c.getInputStream()));
                 JSONObject response = (JSONObject) jsonParser.parse(reader);
-                //Log.d("JSON",json.toJSONString());
                 c.disconnect();
                 JSONArray tracks = (JSONArray)response.get("tracks");
                 ArrayList<SongInfo>topSongs = new ArrayList<SongInfo>();
+
+                // Create a SongInfo object for each returned track
                 for (Object o : tracks) {
                     JSONObject track = (JSONObject) o; //need to cast here
+
+                    // if we got the same song that was played before, skip it
                     if(((String)track.get("id")).equals(hotSongs.get(j).id))continue;
+
                     JSONObject albumJSON = (JSONObject) track.get("album");
                     JSONArray artistArray = (JSONArray) track.get("artists");
 
@@ -374,6 +388,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
                 e.printStackTrace();
             }
         }
+
         //here we now have nested structure of top songs per artist
         //now we loop through the nested structure...adding songs to our suggested songs list
         int songidx=-1;
@@ -382,6 +397,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
             if(index==0)songidx++;
             suggested_songs.add(ArtistTopSongs.get(index).get(songidx));
         }
+        
         //play the song and set suggestedSong index to 0
         currSongSuggest=0;
         playSong(suggested_songs.get(currSongSuggest),false);

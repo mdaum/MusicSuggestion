@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
-
+// Tutorial activity, contains tutorial text
 public class TutorialActivity extends AppCompatActivity
 {
     @Override
