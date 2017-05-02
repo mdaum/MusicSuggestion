@@ -319,6 +319,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
                 ArrayList<SongInfo>topSongs = new ArrayList<SongInfo>();
                 for (Object o : tracks) {
                     JSONObject track = (JSONObject) o; //need to cast here
+                    if(((String)track.get("id")).equals(hotSongs.get(j).id))continue;
                     JSONObject albumJSON = (JSONObject) track.get("album");
                     JSONArray artistArray = (JSONArray) track.get("artists");
 
