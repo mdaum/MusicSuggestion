@@ -397,7 +397,7 @@ public class HON extends AppCompatActivity implements MediaPlayer.OnPreparedList
             if(index==0)songidx++;
             suggested_songs.add(ArtistTopSongs.get(index).get(songidx));
         }
-        
+
         //play the song and set suggestedSong index to 0
         currSongSuggest=0;
         playSong(suggested_songs.get(currSongSuggest),false);
